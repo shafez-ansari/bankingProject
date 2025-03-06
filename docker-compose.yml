@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  tomcat:
+    build: .
+    container_name: banking-app
+    restart: always
+    ports:
+      - "9090:9090"
+    depends_on:
+      - mysql
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=bankingdb
+      - DB_USER=bankinguser
+      - DB_PASS=bankingpass
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: bankingdb
+      MYSQL_USER: bankinguser
+      MYSQL_PASSWORD: bankingpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "8081:80"
+
+volumes:
+  mysql_data:
+
