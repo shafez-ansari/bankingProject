@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/shafez-ansari/bankingProject.git'
+                checkout scm  // SCM se automatically checkout karega
             }
         }
         stage('Build') {
