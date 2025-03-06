@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/shafez-ansari/bankingProject.git'
+                git branch: 'main', url: 'https://github.com/shafez-ansari/bankingProject.git'
             }
         }
         stage('Build') {
