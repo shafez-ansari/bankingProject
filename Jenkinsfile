@@ -3,6 +3,11 @@ pipeline {
 
     environment {
         IMAGE_NAME = "banking-app:latest"
+        SCANNER_HOME = tool(name: 'sonar-scanner') // SonarQube Scanner path
+    }
+
+    triggers {
+        pollSCM('H/2 * * * *') // SCM Polling every 2 minutes
     }
 
     stages {
@@ -29,22 +34,37 @@ pipeline {
 
         stage('Trivy FS Scan') {
             steps {
-                echo 'Running Trivy filesystem scan...'
-                sh 'trivy fs --exit-code 0 --no-progress --severity HIGH,CRITICAL .'
+                script {
+                    echo 'Running Trivy filesystem scan...'
+                    def status = sh(script: 'trivy fs --exit-code 0 --no-progress --severity HIGH,CRITICAL . || true', returnStatus: true)
+                    if (status != 0) {
+                        error("Trivy FS Scan failed!")
+                    }
+                }
             }
         }
 
         stage('Trivy Image Scan') {
             steps {
-                echo 'Running Trivy image scan...'
-                sh 'trivy image --exit-code 0 --no-progress --severity HIGH,CRITICAL $IMAGE_NAME'
+                script {
+                    echo 'Running Trivy image scan...'
+                    def status = sh(script: 'trivy image --exit-code 0 --no-progress --severity HIGH,CRITICAL $IMAGE_NAME || true', returnStatus: true)
+                    if (status != 0) {
+                        error("Trivy Image Scan failed!")
+                    }
+                }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar') {
-                    sh "$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectKey=bankingProject -Dsonar.projectName=bankingProject -Dsonar.sources=."
+                    sh """
+                        $SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectKey=bankingProject \
+                        -Dsonar.projectName=bankingProject \
+                        -Dsonar.sources=.
+                    """
                 }
             }
         }
