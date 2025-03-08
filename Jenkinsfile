@@ -3,11 +3,11 @@ pipeline {
 
     environment {
         IMAGE_NAME = "banking-app:latest"
-        SCANNER_HOME = tool(name: 'sonar-scanner') // SonarQube Scanner path
+        SCANNER_HOME = "${tool 'sonar-scanner'}" // SonarQube Scanner path
     }
 
     triggers {
-        pollSCM('H/2 * * * *') // SCM Polling every 2 minutes
+        pollSCM('H/5 * * * *') // SCM Polling every 5 minutes
     }
 
     stages {
@@ -36,9 +36,9 @@ pipeline {
             steps {
                 script {
                     echo 'Running Trivy filesystem scan...'
-                    def status = sh(script: 'trivy fs --exit-code 0 --no-progress --severity HIGH,CRITICAL . || true', returnStatus: true)
+                    def status = sh(script: 'trivy fs --exit-code 1 --no-progress --severity HIGH,CRITICAL .', returnStatus: true)
                     if (status != 0) {
-                        error("Trivy FS Scan failed!")
+                        error("Trivy FS Scan found vulnerabilities!")
                     }
                 }
             }
@@ -48,9 +48,9 @@ pipeline {
             steps {
                 script {
                     echo 'Running Trivy image scan...'
-                    def status = sh(script: 'trivy image --exit-code 0 --no-progress --severity HIGH,CRITICAL $IMAGE_NAME || true', returnStatus: true)
+                    def status = sh(script: 'trivy image --exit-code 1 --no-progress --severity HIGH,CRITICAL $IMAGE_NAME', returnStatus: true)
                     if (status != 0) {
-                        error("Trivy Image Scan failed!")
+                        error("Trivy Image Scan found vulnerabilities!")
                     }
                 }
             }
