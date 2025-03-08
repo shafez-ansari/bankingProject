@@ -28,7 +28,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo 'Building Docker image...'
-                sh 'docker build -t shafaiz/bankingProject:latest .'
+                sh 'docker build -t ${IMAGE_NAME} .'  // ✅ Image name updated
             }
         }
 
@@ -40,13 +40,13 @@ pipeline {
 
         stage('Trivy Image Scan') {
             steps {
-                sh "trivy image --format table -o trivy-image-report.html shafaiz/bankingProject:latest"
+                sh "trivy image --format table -o trivy-image-report.html ${IMAGE_NAME}"
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonarqube') {  // ✅ FIXED: Correct name used
+                withSonarQubeEnv('sonarqube') {  
                     sh "$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectKey=bankingProject -Dsonar.projectName=bankingProject"
                 }
             }
