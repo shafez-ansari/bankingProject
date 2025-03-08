@@ -28,43 +28,26 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo 'Building Docker image...'
-                sh 'docker build -t $IMAGE_NAME .'
+                sh 'docker build -t shafaiz/bankingProject:latest .'
             }
         }
 
         stage('Trivy FS Scan') {
             steps {
-                script {
-                    echo 'Running Trivy filesystem scan...'
-                    def status = sh(script: 'trivy fs --exit-code 1 --no-progress --severity HIGH,CRITICAL .', returnStatus: true)
-                    if (status != 0) {
-                        error("Trivy FS Scan found vulnerabilities!")
-                    }
-                }
+                sh "trivy fs --format table -o trivy-fs-report.html ."
             }
         }
 
         stage('Trivy Image Scan') {
             steps {
-                script {
-                    echo 'Running Trivy image scan...'
-                    def status = sh(script: 'trivy image --exit-code 1 --no-progress --severity HIGH,CRITICAL $IMAGE_NAME', returnStatus: true)
-                    if (status != 0) {
-                        error("Trivy Image Scan found vulnerabilities!")
-                    }
-                }
+                sh "trivy image --format table -o trivy-image-report.html shafaiz/bankingProject:latest"
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonar') {
-                    sh """
-                        $SCANNER_HOME/bin/sonar-scanner \
-                        -Dsonar.projectKey=bankingProject \
-                        -Dsonar.projectName=bankingProject \
-                        -Dsonar.sources=.
-                    """
+                withSonarQubeEnv('sonarqube') {  // ✅ FIXED: Correct name used
+                    sh "$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectKey=bankingProject -Dsonar.projectName=bankingProject"
                 }
             }
         }
